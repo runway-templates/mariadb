@@ -1,0 +1,100 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/runway-templates/schema/refs/heads/main/v1alpha1.json
+apiVersion: schema.runway.horse/templates/v1alpha1
+kind: Template
+
+metadata:
+  name: mariadb
+  version: 0.1.0
+  displayName: MariaDB
+  description: |
+    Relational database, community fork of MySQL and compatible with MySQL
+    clients. Single instance with persistence on a volume. No replication,
+    so no failover. Not reachable from the internet.
+  category: database
+  tags: [mariadb, mysql, sql, relational, database, oss]
+  logo: ./logo.svg
+  documentation: https://mariadb.com/docs/server/
+  website: https://mariadb.org
+  source: https://github.com/MariaDB/server
+  license: GPL-2.0-only
+  maintainer: runway
+
+inputs:
+  image_tag:
+    type: string
+    default: "12.3"
+    enum: ["12.3", "11.8", "11.4", "10.11"]
+    description: |
+      MariaDB version. All are LTS lines; 12.3 is the current one. Upgrades
+      run on start (MARIADB_AUTO_UPGRADE). Downgrades are not supported —
+      do not lower this after deploy.
+
+  database_name:
+    type: string
+    default: "app"
+    pattern: "^[a-zA-Z][a-zA-Z0-9_]{0,63}$"
+    description: Application database, created on first start.
+
+  username:
+    type: string
+    default: "app"
+    pattern: "^[a-zA-Z][a-zA-Z0-9_]{0,31}$"
+    description: |
+      Application user, created on first start. Has full access to the
+      application database only.
+
+services:
+  - name: mariadb
+    image: "r.planetary-quantum.com/docker-hub-proxy/library/mariadb:${{ inputs.image_tag }}"
+
+    # No command override: the entrypoint reads MARIADB_* to create the
+    # database and users before starting mariadbd. Overriding it skips that.
+
+    env:
+      PORT: "3306"
+      MARIADB_DATABASE: "${{ inputs.database_name }}"
+      MARIADB_USER: "${{ inputs.username }}"
+      MARIADB_PASSWORD:
+        value: "${{ runway.secret(32) }}"
+        description: Password of the application user.
+        warning: |
+          Only read on the very first start, when the data directory is
+          empty. Changing it here will NOT change the password in MariaDB and
+          leaves your clients with a value that does not work. Rotate with
+          ALTER USER over a connection instead.
+      MARIADB_ROOT_PASSWORD:
+        value: "${{ runway.secret(32) }}"
+        description: Password of the root user. Use it for admin tasks only.
+        warning: |
+          Only read on the very first start, when the data directory is
+          empty. Changing it here will NOT change the password in MariaDB.
+          Rotate with ALTER USER over a connection instead.
+      # Runs mariadb-upgrade on start when image_tag moves to a newer version.
+      MARIADB_AUTO_UPGRADE: "1"
+
+    volume:
+      mountPath: /var/lib/mysql
+
+    # the image starts as root and drops to mysql in its entrypoint
+    runAs:
+      user: 999
+      group: 999
+
+    healthcheck:
+      type: exec
+      # Ships with the image; uses the healthcheck user created on first start.
+      command:
+        - healthcheck.sh
+        - --connect
+        - --innodb_initialized
+      # First start creates the system tables and users.
+      initialDelaySeconds: 30
+      periodSeconds: 10
+      timeoutSeconds: 5
+
+    settings:
+      # No TLS on this listener; passwords are the only gate.
+      route: false
+
+    # InnoDB buffer pool and connections need more than the free plans.
+    minPlan: start-m-launch
