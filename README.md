@@ -19,17 +19,24 @@ WIP
 
 ## Connecting
 
-Not routed — reachable only from inside your organization's network. The
-credentials are in the app config:
+Not routed — reachable only from inside your organization's network, at:
+
+```
+<app>.<app>.svc.cluster.local:3306
+```
+
+`<app>` is your app name.
+
+The credentials are in the app config:
 
 ```sh
-runway app config ls --app my-db
+runway app config ls --app <app>
 ```
 
 Connect as the application user:
 
 ```
-mysql://<username>:<MARIADB_PASSWORD>@my-db.my-db.svc.cluster.local:3306/<database_name>
+mysql://<username>:<MARIADB_PASSWORD>@<app>.<app>.svc.cluster.local:3306/<database_name>
 ```
 
 Use `root` with `MARIADB_ROOT_PASSWORD` for admin tasks only.
