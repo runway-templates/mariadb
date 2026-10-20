@@ -4,7 +4,7 @@ kind: Template
 
 metadata:
   name: mariadb
-  version: 0.1.0
+  version: 0.2.0
   displayName: MariaDB
   description: |
     Relational database, community fork of MySQL and compatible with MySQL
@@ -79,6 +79,9 @@ services:
     runAs:
       user: 999
       group: 999
+
+    outputs:
+      DSN: "mysql://${{ inputs.username }}:${{ env.MARIADB_PASSWORD }}@${{ runway.internal_address }}/${{ inputs.database_name }}"
 
     healthcheck:
       type: exec
