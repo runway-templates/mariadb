@@ -17,6 +17,10 @@ WIP
 | `database_name` | `app` | Created on first start |
 | `username` | `app` | Full access to `database_name` only |
 
+## Outputs
+
+`DSN`
+
 ## Connecting
 
 Not routed — reachable only from inside your organization's network, at:
