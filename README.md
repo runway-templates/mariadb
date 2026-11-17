@@ -5,9 +5,28 @@ community fork of MySQL, compatible with MySQL clients.
 
 Single instance with persistence on a volume. No replication, no failover.
 
+> [!TIP]
+> Found a problem, or have an idea for this template?
+> [Open an issue](https://github.com/runway-templates/schema/issues/new/choose) in the schema repository.
+> Issues for all templates are tracked there. Pull requests are welcome right here.
+
 ## Deploy
 
-WIP
+Deploy MariaDB with one click [from your browser](https://ui.runway.horse/deploy/templates),
+or with the Runway CLI:
+
+```sh
+runway app create --app=my-mariadb --plan=start-m-launch
+runway app deploy template --app=my-mariadb --template=mariadb
+```
+
+To change an [input](#inputs), add it as `key=value` at the end of the second command.
+
+Once the app is up, this prints the connection details for your other apps:
+
+```sh
+runway app show --app=my-mariadb
+```
 
 ## Inputs
 
